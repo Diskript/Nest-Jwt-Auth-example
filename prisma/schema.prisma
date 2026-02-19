@@ -19,7 +19,7 @@ model User {
   username  String         @unique @db.VarChar(32)
   email     String         @unique
   role      Role           @default(USER)
-  rt        RefreshToken[] //FefreshToken 
+  rt        RefreshToken[]
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 }
