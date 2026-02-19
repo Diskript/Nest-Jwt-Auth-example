@@ -75,6 +75,7 @@ export const UserScalarFieldEnum = {
   id: 'id',
   username: 'username',
   email: 'email',
+  passwordHash: 'passwordHash',
   role: 'role',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -89,7 +90,7 @@ export const RefreshTokenScalarFieldEnum = {
   userId: 'userId',
   createdAt: 'createdAt',
   deviceInfo: 'deviceInfo',
-  isRevoced: 'isRevoced',
+  isRevoked: 'isRevoked',
   expiresIn: 'expiresIn',
   updatedAt: 'updatedAt'
 } as const

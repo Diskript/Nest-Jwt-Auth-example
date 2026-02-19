@@ -15,23 +15,24 @@ datasource db {
 }
 
 model User {
-  id        Int            @id @unique @default(autoincrement())
-  username  String         @unique @db.VarChar(32)
-  email     String         @unique
-  role      Role           @default(USER)
-  rt        RefreshToken[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id           Int            @id @unique @default(autoincrement())
+  username     String         @unique @db.VarChar(32)
+  email        String         @unique
+  passwordHash String         @db.VarChar(255)
+  role         Role           @default(USER)
+  rt           RefreshToken[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 }
 
 model RefreshToken {
   id         Int      @id @default(autoincrement())
   token      String   @db.VarChar(255)
   userName   User     @relation(fields: [userId], references: [id])
-  userId     Int      @unique
+  userId     Int
   createdAt  DateTime @default(now())
   deviceInfo Json
-  isRevoced  Boolean  @default(false)
+  isRevoked  Boolean  @default(false)
   expiresIn  DateTime @default(dbgenerated("NOW() + INTERVAL '7 days'"))
   updatedAt  DateTime @updatedAt
 }
