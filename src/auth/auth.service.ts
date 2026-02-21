@@ -65,11 +65,47 @@ export class AuthService {
     return tokens;
   }
 
-  logout() {
-    return "logout";
+  async logout(userId: number): Promise<void> {
+    await this.prismaService.refreshToken.deleteMany({
+      where: {
+        userId,
+        token: {
+          not: undefined,
+        },
+      },
+    });
   }
-  refresh() {
-    return "refresh";
+
+  async refresh(req: Request, userId: number, rt: string): Promise<Tokens> {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) throw new ConflictException("User not found" as string);
+
+    const refreshHash = await this.prismaService.refreshToken.findFirstOrThrow({
+      where: {
+        userId,
+      },
+    });
+    if (!refreshHash)
+      throw new ConflictException("Refresh tokens not found" as string);
+
+    const rtMatches = await bcrypt.compare(rt, refreshHash.token);
+    if (!rtMatches)
+      throw new ConflictException("Invalid Refresh Token" as string);
+
+    const tokens = await this.getToken(user.id, user.email);
+    await this.updateRefreshToken(req, user.id, tokens.refresh_token);
+    return tokens;
+  }
+
+  extractSubFromToken(token: string): number {
+    const payload = this.jwtService.verify<{ sub: number }>(token, {
+      secret: process.env.JWT_REFRESH_TOKEN_SECRET,
+    });
+    return payload.sub;
   }
 
   async getToken(userId: number, email: string): Promise<Tokens> {
@@ -115,6 +151,12 @@ export class AuthService {
   ): Promise<void> {
     const hashedRt = await bcrypt.hash(rt, 10);
 
+    await this.prismaService.refreshToken.deleteMany({
+      where: {
+        userId,
+      },
+    });
+    console.log(hashedRt);
     await this.prismaService.refreshToken.create({
       data: {
         token: hashedRt,
@@ -122,5 +164,14 @@ export class AuthService {
         deviceInfo: this.getUserDeviceInfoFromRequest(req),
       },
     });
+  }
+
+  extractRefreshTokenFromRequest(req: Request): string {
+    const cookies = req.cookies as Record<string, string> | undefined;
+    const refreshToken: string | undefined =
+      cookies?.refresh_token || req.headers.authorization?.split(" ")[1];
+    if (!refreshToken)
+      throw new ConflictException("Refresh token not found" as string);
+    return refreshToken;
   }
 }

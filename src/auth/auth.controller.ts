@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Req } from "@nestjs/common";
-import { AuthService } from "./auth.service";
+import { AuthService, Tokens } from "./auth.service";
 import { SingUpDto } from "./dto/singup.dto";
 import type { Request } from "express";
 import { loginDto } from "./dto/login.dto";
@@ -9,25 +9,30 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post("/local/singup")
-  singUpLocal(
+  async singUpLocal(
     @Body() data: SingUpDto,
     @Req() req: Request,
-  ): Promise<{ access_token: string; refresh_token: string }> {
+  ): Promise<Tokens> {
     return this.authService.singUpLocal(data, req);
   }
 
   @Post("/local/singin")
-  singin(@Body() data: loginDto, @Req() req: Request) {
-    return this.authService.singin(data, req);
+  async singin(@Body() data: loginDto, @Req() req: Request): Promise<Tokens> {
+    return await this.authService.singin(data, req);
   }
 
   @Post("/logout")
-  logout() {
-    return this.authService.logout();
+  async logout(@Req() req: Request): Promise<void> {
+    const userId = this.authService.extractSubFromToken(
+      this.authService.extractRefreshTokenFromRequest(req),
+    );
+    await this.authService.logout(userId);
   }
 
   @Post("/refresh")
-  refresh() {
-    return this.authService.refresh();
+  async refresh(@Req() req: Request): Promise<Tokens> {
+    const refreshToken = this.authService.extractRefreshTokenFromRequest(req);
+    const userId = this.authService.extractSubFromToken(refreshToken);
+    return await this.authService.refresh(req, userId, refreshToken);
   }
 }
