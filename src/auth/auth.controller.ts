@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req } from "@nestjs/common";
+import { Body, Controller, HttpCode, Post, Req } from "@nestjs/common";
 import { AuthService, Tokens } from "./auth.service";
 import { SingUpDto } from "./dto/singup.dto";
 import type { Request } from "express";
@@ -21,6 +21,7 @@ export class AuthController {
     return await this.authService.singin(data, req);
   }
 
+  @HttpCode(204)
   @Post("/logout")
   async logout(@Req() req: Request): Promise<void> {
     const userId = this.authService.extractSubFromToken(

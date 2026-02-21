@@ -1,7 +1,9 @@
+import { Injectable } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { Request } from "express";
 import { ExtractJwt, Strategy } from "passport-jwt";
 
+@Injectable()
 export class RtToken extends PassportStrategy(Strategy, "jwt-refresh") {
   constructor() {
     super({
